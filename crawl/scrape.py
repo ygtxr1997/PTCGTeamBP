@@ -29,6 +29,42 @@ def get_rows_from_url(url: str):
     return deck_rows
 
 
+def save_image_from_url(url: str, save_dir: str, filename: str = None, prefix: str = ""):
+    """
+    Save an image from a URL to a local folder.
+
+    Args:
+        url (str): The URL of the image.
+        save_dir (str): The directory to save the image.
+        filename (str): Optional. The name of the file to save. If not provided, use the name from the URL.
+        prefix (int): Optional. The prefix of the image. If not provided, "".
+    """
+    # Create the directory if it does not exist
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # Extract filename from URL if not provided
+    if filename is None:
+        filename = url.split("/")[-1]
+
+    # Full path to save the file
+    save_path = os.path.join(save_dir, f"{prefix}{filename}")
+
+    try:
+        # Get the image content
+        response = requests.get(url, stream=True)
+        response.raise_for_status()  # Raise an exception for failed requests
+
+        # Write the content to a local file
+        with open(save_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+
+        # print(f"Image saved successfully: {save_path}")
+    except Exception as e:
+        print(f"Error saving image: {e}")
+
+
 def get_rank_data(rank_url: str,
                   output_dir: str,
                   use_match_url: bool = True,
@@ -48,8 +84,6 @@ def get_rank_data(rank_url: str,
             deck_url_name = match_url.split("/")[-1].split("?")[0]
             match_url = match_url.replace("?format", "/matchups/?format")
             match_url = root_url + match_url
-            # print(match_url, deck_name)
-            # exit()
 
             if deck_url_name != "" and use_match_url:  # goto the match-up page for this deck
                 get_match_data(match_url, output_dir, save_fn=f"{deck_url_name}.csv")
@@ -66,6 +100,15 @@ def get_rank_data(rank_url: str,
             deck_name_to_limit_id[deck_name] = deck_url_name
             deck_name_to_limit_url[deck_name] = match_url
             decks.append(deck)
+
+            # Save figures of decks
+            fig_urls = [c['src'] for c in cells[1].find_all('img')]
+            for fig_idx, fig_url in enumerate(fig_urls):
+                save_image_from_url(
+                    fig_url,
+                    os.path.join(output_dir, "fig", deck_url_name),
+                    prefix=f"{fig_idx}_"
+                )
 
     # Append deck_url into decks
     for deck in decks:
