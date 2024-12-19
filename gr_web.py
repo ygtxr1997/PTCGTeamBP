@@ -14,10 +14,14 @@ from models import Team
 from plot import plot_decks_win_rates, plot_win_rate_matrix
 from plot import plot_pick_comb_avg_top2
 from matplotlib import rcParams
+import platform
 
 
-# 设置全局字体
-rcParams['font.sans-serif'] = ['SimHei']  # 使用 SimHei 字体 (黑体)
+if platform.system() == "Windows":
+    default_font = "SimHei"
+else:  # Linux 或其他系统
+    default_font = "WenQuanYi Zen Hei"
+rcParams['font.sans-serif'] = [default_font]
 rcParams['axes.unicode_minus'] = False   # 解决负号 "-" 显示为方块的问题
 
 
