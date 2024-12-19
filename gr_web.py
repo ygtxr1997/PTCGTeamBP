@@ -4,6 +4,7 @@ from functools import partial
 import gradio as gr
 import numpy as np
 import pandas as pd
+import yaml
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -36,6 +37,13 @@ def read_rank_data(csv_data_dir: str = "crawl/output",
     return df
 
 
+def load_deck_translations(file="translations.yaml"):
+    """Load deck translations from YAML file."""
+    with open(file, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data["deck_translations"]
+
+
 # Gradio components for the banning tab
 def run_predict_for_banning(ours_num, ours1, ours2, ours3, ours4, ours5, ours6,
                             oppo_num, oppo1, oppo2, oppo3, oppo4, oppo5, oppo6,
@@ -48,10 +56,12 @@ def run_predict_for_banning(ours_num, ours1, ours2, ours3, ours4, ours5, ours6,
     print(oppo_num, oppo1, oppo2, oppo3, oppo4, oppo5, oppo6,)
 
     ours_decks = [ours1, ours2, ours3, ours4, ours5, ours6][:ours_num]
+    ours_decks = [text.split(' | ')[0] for text in ours_decks]
     ours_dis = [ours1_dis, ours2_dis, ours3_dis, ours4_dis, ours5_dis, ours6_dis][:ours_num]
     ours_team = Team(ours_decks, win_rate_discounts=[float(x) for x in ours_dis])
 
     oppo_decks = [oppo1, oppo2, oppo3, oppo4, oppo5, oppo6][:oppo_num]
+    oppo_decks = [text.split(' | ')[0] for text in oppo_decks]
     oppo_dis = [oppo1_dis, oppo2_dis, oppo3_dis, oppo4_dis, oppo5_dis, oppo6_dis][:oppo_num]
     oppo_team = Team(oppo_decks, win_rate_discounts=[float(x) for x in oppo_dis])
 
@@ -148,10 +158,12 @@ def get_picking_policy_after_banning(
     print(oppo_num, oppo1, oppo2, oppo3, oppo4, oppo5, oppo6, )
 
     ours_decks = [ours1, ours2, ours3, ours4, ours5, ours6][:ours_num]
+    ours_decks = [text.split(' | ')[0] for text in ours_decks]
     ours_dis = [ours1_dis, ours2_dis, ours3_dis, ours4_dis, ours5_dis, ours6_dis][:ours_num]
     ours_team = Team(ours_decks, win_rate_discounts=[float(x) for x in ours_dis])
 
     oppo_decks = [oppo1, oppo2, oppo3, oppo4, oppo5, oppo6][:oppo_num]
+    oppo_decks = [text.split(' | ')[0] for text in oppo_decks]
     oppo_dis = [oppo1_dis, oppo2_dis, oppo3_dis, oppo4_dis, oppo5_dis, oppo6_dis][:oppo_num]
     oppo_team = Team(oppo_decks, win_rate_discounts=[float(x) for x in oppo_dis])
 
@@ -302,6 +314,7 @@ def update_matrix_with_labels(ours_num, oppo_num):
 # 生成动态图像的函数
 def display_figure(deck_name: str, name_to_id: dict):
     # Retrieve the folder name using the deck name
+    deck_name = deck_name.split(' | ')[0]
     limit_id = name_to_id[deck_name]
 
     # Directory containing the figures
@@ -405,7 +418,8 @@ with gr.Blocks(
         with gr.Row(equal_height=True):
             dropdown_ours_num = gr.Dropdown(label="#Our Decks (我方卡组数量)", choices=[4, 5, 6], interactive=True,
                                             value=default_ours_num)
-            options = deck_names
+            deck_name_to_zh_cn = load_deck_translations()
+            options = [f"{name} | {deck_name_to_zh_cn[name]}" for name in deck_names]
             display_figure_by_dict = partial(display_figure, name_to_id=deck_to_limit)
             with gr.Column():
                 dropdown_ours1 = gr.Dropdown(label="Deck 1 (U)", choices=options, interactive=True)
