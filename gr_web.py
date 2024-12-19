@@ -13,6 +13,12 @@ from itertools import combinations
 from models import Team
 from plot import plot_decks_win_rates, plot_win_rate_matrix
 from plot import plot_pick_comb_avg_top2
+from matplotlib import rcParams
+
+
+# 设置全局字体
+rcParams['font.sans-serif'] = ['SimHei']  # 使用 SimHei 字体 (黑体)
+rcParams['axes.unicode_minus'] = False   # 解决负号 "-" 显示为方块的问题
 
 
 def read_rank_data(csv_data_dir: str = "crawl/output",
@@ -110,14 +116,20 @@ def run_predict_for_banning(ours_num, ours1, ours2, ours3, ours4, ours5, ours6,
     ''' 1x6 '''
     plt_ours_decks = [f"{x}({i + 1})" for i, x in enumerate(ours_decks)]
     plt_oppo_decks = [f"{x}({i + 1})" for i, x in enumerate(oppo_decks)]
-    plot_decks_win_rates(axes[0], plt_ours_decks, all_banning_our_wr, title="If Opponents Ban Our Deck (by Internet Data)")
-    plot_decks_win_rates(axes[1], plt_oppo_decks, all_banning_wr, title="If We Ban Opponent Deck (by Internet Data)")
-    plot_decks_win_rates(axes[2], plt_ours_decks, custom_all_banning_our_wr, title="If Opponents Ban Our Deck (by Customized Data)")
-    plot_decks_win_rates(axes[3], plt_oppo_decks, custom_all_banning_wr, title="If We Ban Opponent Deck (by Customized Data)")
+    plot_decks_win_rates(axes[0], plt_ours_decks, all_banning_our_wr,
+                         title="If Opponents Ban Our Deck (by Internet Data)\n(假设对手禁用我方卡组(参考国际数据))")
+    plot_decks_win_rates(axes[1], plt_oppo_decks, all_banning_wr,
+                         title="If We Ban Opponent Deck (by Internet Data)\n(假设我方禁用对手卡组(参考国际数据))")
+    plot_decks_win_rates(axes[2], plt_ours_decks, custom_all_banning_our_wr,
+                         title="If Opponents Ban Our Deck (by Customized Data)\n(假设对手禁用我方卡组(参考自定义胜率))")
+    plot_decks_win_rates(axes[3], plt_oppo_decks, custom_all_banning_wr,
+                         title="If We Ban Opponent Deck (by Customized Data)\n(假设我方禁用对手卡组(参考自定义胜率))")
 
     ''' 6x6 '''
-    plot_win_rate_matrix(axes[4], matrix_6x6, plt_ours_decks, plt_oppo_decks, title="Win% Of Ours vs. Opponents (by Internet Data)")
-    plot_win_rate_matrix(axes[5], custom_win_rate_matrix, plt_ours_decks, plt_oppo_decks, title="Win% Of Ours vs. Opponents (by Customized Data)")
+    plot_win_rate_matrix(axes[4], matrix_6x6, plt_ours_decks, plt_oppo_decks,
+                         title="Win% Of Ours vs. Opponents (by Internet Data)\n(我方卡组vs对手卡组胜率详情(参考国际数据))")
+    plot_win_rate_matrix(axes[5], custom_win_rate_matrix, plt_ours_decks, plt_oppo_decks,
+                         title="Win% Of Ours vs. Opponents (by Customized Data)\n(我方卡组vs对手卡组胜率详情(参考自定义胜率))")
 
     plt.tight_layout()
 
@@ -213,19 +225,19 @@ def get_picking_policy_after_banning(
     plot_pick_comb_avg_top2(axes[0], oppo_verbose_out['combinations'],
                             oppo_verbose_out['pick_avg_wrs'],
                             oppo_verbose_out['pick_top_wrs'],
-                            title="Opponents Picking Their Decks (by Internet Data)")
+                            title="Opponents Picking Their Decks (by Internet Data)\n(对手选用不同卡组的胜率(参考国际数据))")
     plot_pick_comb_avg_top2(axes[1], ours_verbose_out['combinations'],
                             ours_verbose_out['pick_avg_wrs'],
                             ours_verbose_out['pick_top_wrs'],
-                            title="Our Team Picking Our Decks (by Internet Data)")
+                            title="Our Team Picking Our Decks (by Internet Data)\n(我方选用不同卡组的胜率(参考国际数据))")
     plot_pick_comb_avg_top2(axes[2], custom_oppo_verbose_out['combinations'],
                             custom_oppo_verbose_out['pick_avg_wrs'],
                             custom_oppo_verbose_out['pick_top_wrs'],
-                            title="Opponents Picking Their Decks (by Customized Data)")
+                            title="Opponents Picking Their Decks (by Customized Data)\n(对手选用不同卡组的胜率(参考自定义胜率))")
     plot_pick_comb_avg_top2(axes[3], custom_ours_verbose_out['combinations'],
                             custom_ours_verbose_out['pick_avg_wrs'],
                             custom_ours_verbose_out['pick_top_wrs'],
-                            title="Our Team Picking Our Decks (by Customized Data)")
+                            title="Our Team Picking Our Decks (by Customized Data)\n(我方选用不同卡组的胜率(参考自定义胜率))")
 
     plt.tight_layout()
 
@@ -281,7 +293,7 @@ def generate_matrix_with_labels(ours_num, oppo_num):
 # Update the matrix when the dropdown values change
 def update_matrix_with_labels(ours_num, oppo_num):
     matrix = generate_matrix_with_labels(ours_num, oppo_num)
-    headers = ["Our Decks"] + [f"Opponent {i + 1}" for i in range(oppo_num)]
+    headers = ["Our Decks (我方卡组)"] + [f"Opponent (对方) {i + 1}" for i in range(oppo_num)]
     return gr.update(value=matrix, headers=headers,
                      row_count=(ours_num, "fixed"),
                      col_count=(oppo_num + 1, "fixed"))
@@ -372,13 +384,26 @@ with gr.Blocks(
     """,
     fill_width=True,
 ) as demo:
-    gr.Markdown("## PTCG Team Match: Ban & Pick Tools")
+    gr.Markdown("## 🎴 PTCG Team Match: Ban & Pick Tools 🤩")
 
     with gr.Tab("Banning & Picking"):
-        gr.Markdown("### Our Decks")
+        gr.Markdown("### 📜使用说明:")
+        gr.Markdown("```shell"
+                    "a. 设置我方卡组和对方卡组; (可选) 根据需要调整胜率衰减值，默认是 1.0  \n"
+                    "b. 本工具默认使用国际服统计数据(https://play.limitlesstcg.com/decks?format=standard&rotation=2022&set=SIT)  \n"
+                    "c. (可选) 在本页面第3.步中可以输入自定义胜率，预测时会分别显示基于国际数据和基于自定义胜率的结果  \n"
+                    "d. 点击 `Run Prediction for Banning` 按钮，即可预测双方禁用结果  \n"
+                    "e. 在本页面第5.步中可以输入实际禁用情况  \n"
+                    "f. 点击 `Get Best Picking Policy`，即可获取最佳选用策略  \n"
+                    "```"
+                    )
+
+        gr.Markdown("### 🐱1. Our Decks (设置我方卡组)")
+        gr.Markdown("```Win% Discount (胜率衰减) 的相关解释：假设一个队伍有 3 套甚至 4 套洛奇亚，那么这些卡组的胜率并不能 100% 达到"
+                    "国际数据的胜率，因此可以给这些卡组输入一个衰减值，胜率衰减值建议范围在 0.95~0.98 附近```")
         default_ours_num = 6
         with gr.Row(equal_height=True):
-            dropdown_ours_num = gr.Dropdown(label="#Our Decks", choices=[4, 5, 6], interactive=True,
+            dropdown_ours_num = gr.Dropdown(label="#Our Decks (我方卡组数量)", choices=[4, 5, 6], interactive=True,
                                             value=default_ours_num)
             options = deck_names
             display_figure_by_dict = partial(display_figure, name_to_id=deck_to_limit)
@@ -387,38 +412,38 @@ with gr.Blocks(
                 # deck1_image = gr.Image(label="Deck 1 (U)", interactive=False)
                 deck1_image = gr.Plot(label="Deck 1 (U)", elem_classes="fixed-plot-height")
                 dropdown_ours1.change(display_figure_by_dict, inputs=[dropdown_ours1], outputs=[deck1_image])
-                ours1_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours1_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_ours2 = gr.Dropdown(label="Deck 2 (V)", choices=options, interactive=True)
                 # deck2_image = gr.Image(label="Deck 2 (V)", interactive=False)
                 deck2_image = gr.Plot(label="Deck 2 (V)", elem_classes="fixed-plot-height")
                 dropdown_ours2.change(display_figure_by_dict, inputs=[dropdown_ours2], outputs=[deck2_image])
-                ours2_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours2_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_ours3 = gr.Dropdown(label="Deck 3 (W)", choices=options, interactive=True)
                 deck3_image = gr.Plot(label="Deck 3 (W)", elem_classes="fixed-plot-height")
                 dropdown_ours3.change(display_figure_by_dict, inputs=[dropdown_ours3], outputs=[deck3_image])
-                ours3_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours3_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_ours4 = gr.Dropdown(label="Deck 4 (X)", choices=options, interactive=True)
                 deck4_image =gr.Plot(label="Deck 4 (X)", elem_classes="fixed-plot-height")
                 dropdown_ours4.change(display_figure_by_dict, inputs=[dropdown_ours4], outputs=[deck4_image])
-                ours4_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours4_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_ours5 = gr.Dropdown(label="Deck 5 (Y)", choices=options, interactive=True)
                 deck5_image = gr.Plot(label="Deck 5 (Y)", elem_classes="fixed-plot-height")
                 dropdown_ours5.change(display_figure_by_dict, inputs=[dropdown_ours5], outputs=[deck5_image])
-                ours5_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours5_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_ours6 = gr.Dropdown(label="Deck 6 (Z)", choices=options, interactive=True)
                 deck6_image = gr.Plot(label="Deck 6 (Z)", elem_classes="fixed-plot-height")
                 dropdown_ours6.change(display_figure_by_dict, inputs=[dropdown_ours6], outputs=[deck6_image])
-                ours6_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                ours6_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             dropdown_ours = [
                 dropdown_ours1, dropdown_ours2, dropdown_ours3, dropdown_ours4,
@@ -436,46 +461,46 @@ with gr.Blocks(
             dropdown_ours_num.change(update_dropdowns, inputs=dropdown_ours_num, outputs=deck_image_ours)
             dropdown_ours_num.change(update_dropdowns, inputs=dropdown_ours_num, outputs=discount_ours)
 
-        gr.Markdown("### Opponent Decks")
+        gr.Markdown("### 👊2. Opponent Decks (设置对手卡组)")
         with gr.Row(equal_height=True):
             default_oppo_num = 6
-            dropdown_oppo_num = gr.Dropdown(label="#Opponent Decks", choices=[4, 5, 6], interactive=True,
+            dropdown_oppo_num = gr.Dropdown(label="#Opponent Decks (对方卡组数量)", choices=[4, 5, 6], interactive=True,
                                             value=default_oppo_num)
             with gr.Column():
                 dropdown_oppo1 = gr.Dropdown(label="Deck 1 (U)", choices=options, interactive=True)
                 op_deck1_image = gr.Plot(label="Deck 1 (U)", elem_classes="fixed-plot-height")
                 dropdown_oppo1.change(display_figure_by_dict, inputs=[dropdown_oppo1], outputs=[op_deck1_image])
-                oppo1_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo1_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_oppo2 = gr.Dropdown(label="Deck 2 (V)", choices=options, interactive=True)
                 op_deck2_image = gr.Plot(label="Deck 2 (V)", elem_classes="fixed-plot-height")
                 dropdown_oppo2.change(display_figure_by_dict, inputs=[dropdown_oppo2], outputs=[op_deck2_image])
-                oppo2_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo2_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_oppo3 = gr.Dropdown(label="Deck 3 (W)", choices=options, interactive=True)
                 op_deck3_image = gr.Plot(label="Deck 3 (W)", elem_classes="fixed-plot-height")
                 dropdown_oppo3.change(display_figure_by_dict, inputs=[dropdown_oppo3], outputs=[op_deck3_image])
-                oppo3_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo3_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_oppo4 = gr.Dropdown(label="Deck 4 (X)", choices=options, interactive=True)
                 op_deck4_image = gr.Plot(label="Deck 4 (X)", elem_classes="fixed-plot-height")
                 dropdown_oppo4.change(display_figure_by_dict, inputs=[dropdown_oppo4], outputs=[op_deck4_image])
-                oppo4_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo4_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_oppo5 = gr.Dropdown(label="Deck 5 (Y)", choices=options, interactive=True)
                 op_deck5_image = gr.Plot(label="Deck 5 (Y)", elem_classes="fixed-plot-height")
                 dropdown_oppo5.change(display_figure_by_dict, inputs=[dropdown_oppo5], outputs=[op_deck5_image])
-                oppo5_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo5_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             with gr.Column():
                 dropdown_oppo6 = gr.Dropdown(label="Deck 6 (Z)", choices=options, interactive=True)
                 op_deck6_image = gr.Plot(label="Deck 6 (Z)", elem_classes="fixed-plot-height")
                 dropdown_oppo6.change(display_figure_by_dict, inputs=[dropdown_oppo6], outputs=[op_deck6_image])
-                oppo6_discount = gr.Slider(label="Win% Discount", minimum=0., maximum=1., step=0.01, value=1,
+                oppo6_discount = gr.Slider(label="Win% Discount (胜率衰减)", minimum=1e-3, maximum=1., step=0.01, value=1,
                                            interactive=True)
             dropdown_oppo = [
                 dropdown_oppo1, dropdown_oppo2, dropdown_oppo3, dropdown_oppo4,
@@ -493,8 +518,8 @@ with gr.Blocks(
             dropdown_oppo_num.change(update_dropdowns, inputs=dropdown_oppo_num, outputs=deck_image_oppo)
             dropdown_oppo_num.change(update_dropdowns, inputs=dropdown_oppo_num, outputs=discount_oppo)
 
-        gr.Markdown("### Customizing Win Rate Matrix (Ours vs. Opponents)")
-        matrix_headers = ["Our Decks"] + [f"Opponent {i + 1}" for i in range(default_oppo_num)]
+        gr.Markdown("### 🧬3. Customizing Win Rate Matrix (Ours vs. Opponents) (自定义胜率矩阵 (我方所有 vs. 对方所有))")
+        matrix_headers = ["Our Decks (我方)"] + [f"Opponent (对方) {i + 1}" for i in range(default_oppo_num)]
         customize_matrix_input = gr.Dataframe(
             label="Customized Win Rate Matrix (%)",
             value=generate_matrix_with_labels(default_ours_num, default_oppo_num),
@@ -516,12 +541,12 @@ with gr.Blocks(
             outputs=customize_matrix_input
         )
 
-        gr.Markdown("### Run Prediction for Banning")
+        gr.Markdown("### 🔮4. Run Prediction for Banning (开始预测禁用结果)")
         # row_input = gr.Number(label="Row to Ban (Index)", value=0, precision=0)
         # col_input = gr.Number(label="Column to Ban (Index)", value=0, precision=0)
-        ban_button = gr.Button("Run Prediction for Banning")
+        ban_button = gr.Button("Run Prediction for Banning (开始预测禁用结果)", variant="primary")
         # ban_output = gr.Textbox(label="Modified Win Rate Matrix")
-        ban_output = gr.Plot(label="Prediction Result")
+        ban_output = gr.Plot(label="Prediction Result (预测结果)")
         ban_button.click(
             run_predict_for_banning,
             inputs=[
@@ -536,15 +561,15 @@ with gr.Blocks(
             outputs=ban_output
         )
 
-        gr.Markdown("### Banning")
+        gr.Markdown("### 🔒5. Banning (实际禁用情况)")
         with gr.Row():
             ban_options = ["1 (U)", "2 (V)", "3 (W)", "4 (X)", "5 (Y)", "6 (Z)"]
-            dropdown_banned_ours = gr.Dropdown(label="Our Banned Deck", choices=ban_options, interactive=True)
-            dropdown_banned_oppo = gr.Dropdown(label="Opponent Banned Deck", choices=ban_options, interactive=True)
+            dropdown_banned_ours = gr.Dropdown(label="Our Banned Deck (我方被禁卡组)", choices=ban_options, interactive=True)
+            dropdown_banned_oppo = gr.Dropdown(label="Opponent Banned Deck (对方被禁卡组)", choices=ban_options, interactive=True)
 
-        gr.Markdown("### Get Best Picking Policy")
-        pick_button = gr.Button("Get Best Picking Policy")
-        pick_output = gr.Plot(label="Best Picking Policy")
+        gr.Markdown("### 🌠6. Get Best Picking Policy (获取最佳选用策略)")
+        pick_button = gr.Button("Get Best Picking Policy (获取最佳选用策略)", variant="primary")
+        pick_output = gr.Plot(label="Best Picking Policy (最佳选用策略结果)")
         pick_button.click(
             get_picking_policy_after_banning,
             inputs=[

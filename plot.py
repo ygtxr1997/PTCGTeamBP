@@ -143,7 +143,7 @@ def plot_pick_comb_avg_top2(
 
     # Customize axis labels and title
     ax.set_title(title, fontsize=16)
-    ax.set_xlabel("Picking Combinations of Decks", fontsize=12)
+    ax.set_xlabel("Picking Combinations of Decks (选用卡组组合)", fontsize=12)
     # ax.set_ylabel("Metrics", fontsize=12)
     ax.tick_params(axis='x', rotation=0)  # No rotation since combinations are block-style
     ax.tick_params(axis='y', rotation=0)  # Rotate x-axis labels

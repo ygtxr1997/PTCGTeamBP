@@ -64,8 +64,10 @@ class Deck(object):
     def vs_single(self, opponent: Union[str, "Deck"]) -> float:
         if isinstance(opponent, str):
             oppo_deck_name = opponent
+            oppo_discount = 1.
         elif isinstance(opponent, Deck):
             oppo_deck_name = opponent.deck_name
+            oppo_discount = opponent.win_rate_discount
         else:
             raise TypeError(f"Opponent type {type(opponent)} is not supported.")
 
@@ -77,7 +79,8 @@ class Deck(object):
             win_rate = win_rate_data.iloc[0]
 
         # print(win_rate)
-        return float(win_rate) * self.win_rate_discount
+        # print("Deck.vs_single:", self.win_rate_discount, win_rate)
+        return float(win_rate) * self.win_rate_discount / oppo_discount
 
 
 class Team(object):
@@ -86,11 +89,11 @@ class Team(object):
                  win_rate_discounts: List[float],
                  ):
         self.team_deck_names = team_deck_names
-        self.win_rate_discount = win_rate_discounts
+        self.win_rate_discounts = win_rate_discounts
 
         # Create Deck classes
         self.decks = [Deck(n, win_rate_discount=d)
-                      for n, d, in zip(self.team_deck_names, self.win_rate_discount)]
+                      for n, d, in zip(self.team_deck_names, self.win_rate_discounts)]
 
     def vs_team(self, opponents: Union[List[str], "Team"]) -> np.ndarray:
         """ Output a win rate matrix. """
@@ -198,9 +201,9 @@ class Team(object):
             team_pick_avg_wrs.append(avg_3x3_win_rates.mean())
             team_pick_top_wrs.append(top_3x2_win_rates.mean())
 
-        print(team_combinations)
-        print(team_pick_avg_wrs)
-        print(team_pick_top_wrs)
+        print('team_combinations:', team_combinations)
+        print('team_pick_avg_wrs', team_pick_avg_wrs)
+        print('team_pick_top_wrs', team_pick_top_wrs)
         verbose_out = {
             'combinations': team_combinations,
             'pick_avg_wrs': team_pick_avg_wrs,
@@ -245,49 +248,50 @@ class Team(object):
         return best_ban_idx, best_ban_avg_wr, all_ban_avg_wr
 
 
-# Example usage
-# deck = Deck(deck_name="Lugia Archeops")
-deck = Deck(deck_name="Mew Genesect")
-deck.vs_single(opponent="Lugia Archeops")
+if __name__ == "__main__":
+    # Example usage
+    # deck = Deck(deck_name="Lugia Archeops")
+    deck = Deck(deck_name="Mew Genesect")
+    deck.vs_single(opponent="Lugia Archeops")
 
-team1_decks = ["Lugia Archeops", "Mew Genesect", "Zoroark Box", "Lugia Archeops", "Kyurem Palkia", "Other"][:6]
-team1_discounts = [1 for _ in range(len(team1_decks))]
-# team1_discounts[3] *= 0.95
-team2_decks = ["Lugia Archeops", "Mew Genesect", "Arceus Tapu Koko", "Regis", "Goodra LZ Box", "Lost Zone Box"][:5]
-team2_discounts = [1] * len(team1_decks)
+    team1_decks = ["Lugia Archeops", "Mew Genesect", "Zoroark Box", "Lugia Archeops", "Kyurem Palkia", "Other"][:6]
+    team1_discounts = [1 for _ in range(len(team1_decks))]
+    # team1_discounts[3] *= 0.95
+    team2_decks = ["Lugia Archeops", "Mew Genesect", "Arceus Tapu Koko", "Regis", "Goodra LZ Box", "Lost Zone Box"][:5]
+    team2_discounts = [1] * len(team1_decks)
 
-Team1 = Team(team1_decks, team1_discounts)
-Team2 = Team(team2_decks, team2_discounts)
-result = Team1.vs_team(opponents=Team2)
+    Team1 = Team(team1_decks, team1_discounts)
+    Team2 = Team(team2_decks, team2_discounts)
+    result = Team1.vs_team(opponents=Team2)
 
-# Opponent decides to ban our decks
-banning_our_deck, banning_wr, _ = Team2.best_ban_policy(Team1)
-print(f"Opponent Will Ban Our Deck: {Team1.decks[banning_our_deck].deck_name}({banning_our_deck}), "
-      f"Avg.Win%={banning_wr:.2f}")
+    # Opponent decides to ban our decks
+    banning_our_deck, banning_wr, _ = Team2.best_ban_policy(Team1)
+    print(f"Opponent Will Ban Our Deck: {Team1.decks[banning_our_deck].deck_name}({banning_our_deck}), "
+          f"Avg.Win%={banning_wr:.2f}")
 
-# Based on predicted opponent's banning deck, we decide to ban opponent's deck
-banning_opponent_deck, banning_wr, _ = Team1.best_ban_policy(Team2)
-print(f"We Will Ban Opponent Deck: {Team2.decks[banning_opponent_deck].deck_name}({banning_opponent_deck}), "
-      f"Avg.Win%={banning_wr:.2f}")
+    # Based on predicted opponent's banning deck, we decide to ban opponent's deck
+    banning_opponent_deck, banning_wr, _ = Team1.best_ban_policy(Team2)
+    print(f"We Will Ban Opponent Deck: {Team2.decks[banning_opponent_deck].deck_name}({banning_opponent_deck}), "
+          f"Avg.Win%={banning_wr:.2f}")
 
-# Find the best picking policy for opponent
-best_avg_wr, best_avg_pick, best_top2_wr, best_top2_pick, verbose_out = Team2.best_picking_policy(
-    Team1, pick_size=3, self_banned=banning_opponent_deck,
-    return_verbose=True,
-)
-opponents_picking = [best_avg_pick, best_top2_pick]
-print("Opponent Best Average Win Rate:", best_avg_wr, "Top-2 Win Rate:", best_top2_wr)
-
-# Find the best picking policy
-opponents_picking = None
-best_avg_wr, best_avg_pick, best_top2_wr, best_top2_pick = \
-    Team1.best_picking_policy(
-        Team2, pick_size=3,
-        opponents_pick_policy=opponents_picking,
-        self_banned=banning_our_deck,
-        opponent_banned=banning_opponent_deck,
+    # Find the best picking policy for opponent
+    best_avg_wr, best_avg_pick, best_top2_wr, best_top2_pick, verbose_out = Team2.best_picking_policy(
+        Team1, pick_size=3, self_banned=banning_opponent_deck,
+        return_verbose=True,
     )
-print("Best Average Win Rate:", best_avg_wr)
-print("Best Average Team Pick:", [team1_decks[i] for i in best_avg_pick])
-print("Best Top-2 Win Rate:", best_top2_wr)
-print("Best Top-2 Team Pick:", [team1_decks[i] for i in best_top2_pick])
+    opponents_picking = [best_avg_pick, best_top2_pick]
+    print("Opponent Best Average Win Rate:", best_avg_wr, "Top-2 Win Rate:", best_top2_wr)
+
+    # Find the best picking policy
+    opponents_picking = None
+    best_avg_wr, best_avg_pick, best_top2_wr, best_top2_pick = \
+        Team1.best_picking_policy(
+            Team2, pick_size=3,
+            opponents_pick_policy=opponents_picking,
+            self_banned=banning_our_deck,
+            opponent_banned=banning_opponent_deck,
+        )
+    print("Best Average Win Rate:", best_avg_wr)
+    print("Best Average Team Pick:", [team1_decks[i] for i in best_avg_pick])
+    print("Best Top-2 Win Rate:", best_top2_wr)
+    print("Best Top-2 Team Pick:", [team1_decks[i] for i in best_top2_pick])
