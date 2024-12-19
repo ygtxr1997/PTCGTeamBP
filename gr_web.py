@@ -21,7 +21,7 @@ if platform.system() == "Windows":
     default_font = "SimHei"
 else:  # Linux 或其他系统
     default_font = "Noto Sans CJK SC"
-rcParams['font.sans-serif'] = [default_font]
+rcParams['font.sans-serif'] = "SimHei"
 rcParams['axes.unicode_minus'] = False   # 解决负号 "-" 显示为方块的问题
 
 
