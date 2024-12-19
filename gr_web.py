@@ -388,9 +388,9 @@ with gr.Blocks(
 
     with gr.Tab("Banning & Picking"):
         gr.Markdown("### 📜使用说明:")
-        gr.Markdown("```shell"
+        gr.Markdown("```shell  \n"
                     "a. 设置我方卡组和对方卡组; (可选) 根据需要调整胜率衰减值，默认是 1.0  \n"
-                    "b. 本工具默认使用国际服统计数据(https://play.limitlesstcg.com/decks?format=standard&rotation=2022&set=SIT)  \n"
+                    "b. 本工具默认使用国际服统计数据 (https://play.limitlesstcg.com/decks?format=standard&rotation=2022&set=SIT)  \n"
                     "c. (可选) 在本页面第3.步中可以输入自定义胜率，预测时会分别显示基于国际数据和基于自定义胜率的结果  \n"
                     "d. 点击 `Run Prediction for Banning` 按钮，即可预测双方禁用结果  \n"
                     "e. 在本页面第5.步中可以输入实际禁用情况  \n"
